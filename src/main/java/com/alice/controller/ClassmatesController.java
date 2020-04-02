@@ -62,7 +62,7 @@ public class ClassmatesController {
     //REST风格操作数据-员工保存
     public Msg saveClassmates(Classmates classmates)
     {
-        System.out.println(classmates);
+       // System.out.println(classmates);
         classmatesService.saveClassmates(classmates);
          return Msg.sueccess();
     }
@@ -72,7 +72,7 @@ public class ClassmatesController {
     //没有在对应的Controller类中添加对GET请求的处理方法。虽然并没有使用get请求，
     // 但是在进入首页加载表单的时候，默认就是个get请求，而恰好这个请求被笔者的设置拦截了，
     // 所以当请求被拦截后又找不到对应的处理方法，报出了这个错误。
-    @ResponseBody
+    @ResponseBody//return值对象变成json
     //REST风格操作数据-员工保存
     public Msg saveClassmates2(Classmates classmates)
     {
@@ -82,6 +82,35 @@ public class ClassmatesController {
     }
 
 
+
+    @RequestMapping(value = "/checkname",method = RequestMethod.GET)
+    @ResponseBody
+    //REST风格操作数据-员工保存
+    //@RequestParam("name")明确了要取出的数值是哪个，对应实体类的字段(错)是请求和响应的对照？！
+    public Msg checkname(@RequestParam("name")String name)
+    {
+        //@RequestParam：将请求参数绑定到你控制器的方法参数上（是springmvc中接收普通参数的注解）
+       //增加后端校验功能
+        String regx="(^[a-zA-Z0-9_-]{6,16}$)|(^[\u2E80-\u9FFF]{2,5})";
+        boolean tf=name.matches(regx);
+        if(!tf)
+        {
+
+            return Msg.fail().add("va_msg","用户名必须是2-5位中文名或者6-16位英文名");
+        }
+          //（优先级），只有用户名合法的时候才会进行重复性校验，也就是说用户名不合法的时候直接报错
+        else{
+            boolean b_name=classmatesService.checkname(name);
+            if(b_name)
+            {
+                return Msg.sueccess();
+            }
+            else {
+                return  Msg.fail().add("va_msg","用户名重复不可用");//Msg判断不同状态
+            }
+        }
+
+    }
 
 
 

@@ -42,6 +42,7 @@
                         <div class="col-sm-10">
                             <!--name属性是指封装到对应实体类的那个变量，名字要对应-->
                             <input type="text" class="form-control" name="name" id="inputName" placeholder="姓名">
+                            <span id="helpBlock2" class="help-block">  </span>
                         </div>
                     </div>
                     <div class="form-group">
@@ -55,6 +56,7 @@
                                 <!--name属性是指封装到对应实体类的那个变量，名字要对应-->
                                 <input type="radio" name="gender" id="gender_add2" value="S"> 女
                             </label>
+
                         </div>
                     </div>
                     <div class="form-group">
@@ -62,6 +64,7 @@
                         <div class="col-sm-10">
                             <!--name属性是指封装到对应实体类的那个变量，名字要对应-->
                             <input type="email" class="form-control"name="email" id="inputEmail" placeholder="邮箱">
+                            <span id="helpBlock3" class="help-block"> </span>
                         </div>
                     </div>
 
@@ -71,7 +74,7 @@
                         <div class="col-sm-4">
                             <!--name属性是指封装到对应实体类的那个变量，名字要对应-->
                             <select class="form-control" name="gradeId" id="select_grade_list">
-<!--                                <option>高中</option>-->
+                                <!--                                <option>高中</option>-->
 
 
                             </select>
@@ -301,11 +304,22 @@
         var navEle=$("<nav></nav>").append(ul);
         navEle.appendTo("#page_nav");
     }
+
+    //清空表单样式和内容
+    function reset_form(ele){
+        ele[0].reset();//调用dom的方法【取值】，转换
+        ele.find("*").removeClass("has-success has-error ajax_st");
+        //清空提示信息
+        ele.find(".help-block").text("");
+
+
+    }
     //点击新增添加模态框
     $("#classmate_add_model_btn").click(function ()
     {
         //弹框之前应该先发送ajax请求得到在数据库中的年级信息并显示在下拉列表
-
+        //表单的重置
+        reset_form($("#classmateAddModal form"));
         getGradeInfo();
         //弹出模态框
         $("#classmateAddModal").modal({backdrop:"static"});
@@ -333,43 +347,152 @@
             }
         );
     }
-    //保存新增信息功能
+
+
+
+    function show_validate_msg(ele,status,msg) {
+        if("success"==status)
+        {
+            //使用前先清空元素的旧样式
+            $(ele).parent().removeClass("has-success has-error");
+            $(ele).next("span").text(" ");
+            $(ele).parent().addClass("has-success");
+            //alert("用户名可以是2-5位中文名或者6-16位英文名");
+            $(ele).next("span").text(msg);
+
+        }
+        else  if("error"==status)
+        {
+            //使用前先清空元素的旧样式
+            $(ele).parent().removeClass("has-success has-error");
+            $(ele).next("span").text(" ");
+            $(ele).parent().addClass("has-error");
+            //alert("用户名可以是2-5位中文名或者6-16位英文名");
+            $(ele).next("span").text(msg);
+
+        }
+    }
+
+
+
+    //给保存按钮保存新增信息功能
     //1.模态框信息提交到服务器保存
     //2.发送ajax请求
     $("#classmats_info_save").click(function () {
         //alert(decodeURIComponent($("#classmate_info_form").serialize(),true)) ;
+            //show_validate_msg("#inputName","error","该姓名存在于同学录中，可能已经存储过");
+
+            vali_add_form_info();
+        //提交之前先对信息进行校验
+        if(!vali_add_form_info()){
+            return false;//注意此处想要返回false使得跳出函数需要在最外层function内部！！
+        }
+        //保存之前在判断一下用户名重复性的校验有没有通过
+       // 在给员工姓名框绑定change事件的时候添加一个属性
+       //  if($(this).attr("ajax_st")=="error")
+       //  {
+       //      show_validate_msg("#inputName","error","该姓名存在于同学录中，可能已经存储过");
+       //      return  false;
+       //  }
 
         $.ajax({
-        url:"/StudentAlbum/classmateInfo",
-         type:"POST",
-         data:decodeURIComponent($("#classmate_info_form").serialize(),true),
-         //data:$("#classmate_info_form").serialize(),
+            //在ajax里直接写return false，是无效的。
+            // 因为它返回的是ajax中的success方法
+            url:"/StudentAlbum/classmateInfo",
+            type:"POST",
+            async: false,//一定要是同步请求，否则会跳转；（ajax默认是异步的）
+            data:decodeURIComponent($("#classmate_info_form").serialize(),true),//serialize()序列表表格内容为字符串，用于 Ajax 请求。
+            //data:$("#classmate_info_form").serialize(),
             success:function (result) {
-            alert(result.msg)
+              //  alert(result.msg)
+                $("#classmateAddModal").modal('hide');
             }
 
-            })
+        })
 
 
 
+
+    }
+    );
+
+
+    //给员工姓名框绑定change事件，检测出是否存在重复同学名姓名，
+    $("#inputName").change(function () {
+        var name=this.value;
+        //发送ajax请求看姓名是否可用
+        $.ajax( {
+            url:"/StudentAlbum/checkname",
+            data: "name="+name,
+            type:"GET",
+            success:function (result) {
+                if(result.code==100){
+                    show_validate_msg("#inputName","success","该姓名可用，未发生重复");
+                    $("#classmats_info_save").attr("ajax_st","success");
+                }
+                else if(result.code==200){
+                    show_validate_msg("#inputName","error",result.extend.va_msg);
+                    if ( result.extend.va_msg=="用户名重复不可用"){
+                        $("#inputName").attr("cf","true");
+                    }
+                    $("#classmats_info_save").attr("ajax_st","error");
+                    return false;
+                }
+            }
+
+        })
 
     });
-    // function classmate_add()
-    // {
-    //     //1.模态框信息提交到服务器保存
-    //     //2.发送ajax请求
-    //    alert($("#classmateAddModal form").serialize()) ;
-    //     // $.ajax({
-    //     //     url:"/StudentAlbum/classmateInfo",
-    //     //     type:"POST",
-    //     //     data:""
-    //     //
-    //     //
-    //     //     }
-    //     //
-    //     // )
-    //
-    // }
+
+
+    function vali_add_form_info() {
+        //1.拿到要检验的数据，正则表达式校验
+        var classe_name=$("#inputName").val();
+        var reg_name=/(^[a-zA-Z0-9_-]{6,16}$)|(^[\u2E80-\u9FFF]{2,5})/;
+
+        // alert(reg_name.test(classe_name));
+        if (!reg_name.test(classe_name))
+        {
+            //alert(reg_name.test(classe_name));
+            show_validate_msg("#inputName","error","姓名格式有误，可以是2-5位中文名或者6-16位英文名！");
+            return false;
+        }
+        else {
+
+            show_validate_msg("#inputName","success","");
+            if($("#inputName").attr("cf") == "true")
+            {
+                //console.log("cf true")
+                // alert($(this).attr("cf"));
+                show_validate_msg("#inputName","error","该姓名存在于同学录中，可能已经存储过");
+                //  $("#inputName").parent().removeClass("has-success has-error");
+                // // $("#inputName").next("span").text(" ");
+                // $("#inputName").parent().addClass("has-error");
+                // $("#inputName").next("span").text("该姓名存在于同学录中，可能已经存储过");
+            }
+
+        }
+        //校验邮箱信息
+        var email_info=$("#inputEmail").val();
+        var reg_email=/^([a-z0-9_\-]+)@([\da-z.-]+)\.([a-z.]{2,6})$/;
+        if(!reg_email.test(email_info))
+        {
+            // alert(email_info);
+            // alert(reg_email.test(email_info));
+            show_validate_msg("#inputEmail","error","邮箱格式错误，请检查后输入！");
+            //return false;
+        }
+        else {
+            // alert(email_info);
+            // alert(reg_email.test(email_info));
+            show_validate_msg("#inputEmail","success","");
+            return true;
+        }
+    }
+
+
+
+
 
 </script>
 </body>
