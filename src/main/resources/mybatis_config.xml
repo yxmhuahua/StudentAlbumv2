@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<!--mybatis的全局配置文件XML 配置文件中包含了对 MyBatis 系统的核心设置，
+包括获取数据库连接实例的数据源（DataSource）以及决定事务作用域和控制方式的事务管理器（TransactionManager）。
+由于已经配置大部分所以可以省略，只需要将需要配置的参数配置在spring_config.xml中，spring_config.xml配置文件实际上就是mybatis和spring的结合-->
+
+<configuration>
+    <!--设置（settings）是 MyBatis 中极为重要的调整设置，它们会改变 MyBatis 的运行时行为-->
+    <settings>
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+
+    </settings>
+    <!--类型别名可为 Java 类型设置一个缩写名字。 它仅用于 XML 配置，意在降低冗余的全限定类名书写。
+    也可以指定一个包名，MyBatis 会在包名下面搜索需要的 Java Bean，比如：
+    <typeAliases>
+      <package name="domain.blog"/>
+    </typeAliases>
+   每一个在包 domain.blog 中的 Java Bean，在没有注解的情况下，会使用 Bean 的首字母小写的非限定类名来作为它的别名。
+   比如 domain.blog.Author 的别名为 author；若有注解，则别名为其注解值。
+   如： @Alias("author")
+    public class Author {...}-->
+    <typeAliases>
+        <package name="com.alice.bean"/>
+    </typeAliases>
+    <!-- 在插件中注册分页插件， 也就是MyBatis 配置 xml 中配置拦截器插件-->
+    <plugins>
+        <!-- com.github.pagehelper为PageHelper类所在包名，新版拦截器是 com.github.pagehelper.PageInterceptor。
+         com.github.pagehelper.PageHelper 现在是一个特殊的 dialect 实现类，是分页插件的默认实现类，提供了和以前相同的用法。 -->
+        <plugin interceptor="com.github.pagehelper.PageInterceptor">
+            <property name="reasonable" value="true"/>
+
+
+        </plugin>
+
+    </plugins>
+</configuration>

@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alice.dao.ClassmatesMapper">
+  <resultMap id="BaseResultMap" type="com.alice.bean.Classmates" >
+    <!-- property是对应实体类里面的属性名称-->
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="gender" jdbcType="CHAR" property="gender" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="grade_id" jdbcType="INTEGER" property="gradeId" />
+  </resultMap>
+  <resultMap id="WithGradeResultMap" type="com.alice.bean.Classmates">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="gender" jdbcType="CHAR" property="gender" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="grade_id" jdbcType="INTEGER" property="gradeId" />
+    <!-- association标签用于一对一关系就是 将另一张表的字段 关联过来 然后一起映射到实体类;
+    而实体类可以  关联另一张表的实体对象,也可以另一张表中所需的字段;就是两张表的关联查询, 然后映射到实体类中;-->
+    <!--指定联合查询出的部门字段的封装 -->
+    <association property="grade" javaType="com.alice.bean.Grade">
+      <!-- property是对应实体类里面的属性名称-->
+      <id column="Grade_id" property="gradeId"/>
+      <id column="Grade_name" property="gradeName"/>
+    </association>
+  </resultMap>
+
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    t_classmates.id, t_classmates.name, gender, email, grade_id
+  </sql>
+  <!--
+   新增的查询员工同时带部门信息的两个查询
+   List<Classmates> selectByExampleWithGrade(ClassmatesExample example);
+   Classmates selectByPrimaryKeyWithGrade(Integer id);
+  -->
+  <sql id="WithGrade_Column_List">
+     t_classmates.id, t_classmates.name, t_classmates.gender, t_classmates.email, t_classmates.grade_id,t_grade.Grade_id,t_grade.Grade_name
+  </sql>
+  <select id="selectByExampleWithGrade" resultMap="WithGradeResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="WithGrade_Column_List" />
+    FROM t_classmates LEFT JOIN t_grade ON t_classmates.grade_id=t_grade.`Grade_id`
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKeyWithGrade" resultMap="WithGradeResultMap">
+    select
+    <include refid="WithGrade_Column_List" />
+    from t_classmates
+    where t_classmates.id = #{t_grade.`Grade_id`,jdbcType=INTEGER}
+  </select>
+
+  <!-- 查询员工同时带部门信息的两个查询 -->
+  <select id="selectByExample" parameterType="com.alice.bean.ClassmatesExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from t_classmates
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    FROM t_classmates LEFT JOIN t_grade ON t_classmates.grade_id=t_grade.`Grade_id`
+    where t_classmates.`id` = #{`id`,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from t_classmates
+    where t_classmates.`id` = #{`id`,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.alice.bean.ClassmatesExample">
+    delete from t_classmates
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.alice.bean.Classmates">
+    insert into t_classmates (`id`, `name`, `gender,`email`, `grade_id`)
+    values (#{`id`,jdbcType=INTEGER}, #{`name`,jdbcType=VARCHAR}, #{`gender`,jdbcType=CHAR},
+      #{`email`,jdbcType=VARCHAR}, #{`gradeId`,jdbcType=INTEGER})
+  </insert>
+  <insert id="insertSelective" parameterType="com.alice.bean.Classmates">
+    insert into t_classmates
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        t_classmates.id,
+      </if>
+      <if test="name != null">
+        t_classmates.`name`,
+      </if>
+      <if test="gender != null">
+        t_classmates.gender,
+      </if>
+      <if test="email != null">
+        t_classmates.email,
+      </if>
+      <if test="gradeId != null">
+        t_classmates.grade_id
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="gender != null">
+        #{gender,jdbcType=CHAR},
+      </if>
+      <if test="email != null">
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="gradeId != null">
+        #{gradeId,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+
+  <select id="countByExample" parameterType="com.alice.bean.ClassmatesExample" resultType="java.lang.Long">
+    select count(*) from t_classmates
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update t_classmates
+    <set>
+      <if test="record.id != null">
+        t_classmates.id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.name != null">
+        t_classmates.name = #{record.name,jdbcType=VARCHAR},
+      </if>
+      <if test="record.gender != null">
+        t_classmates.gender = #{record.gender,jdbcType=CHAR},
+      </if>
+      <if test="record.email != null">
+        t_classmates.email = #{record.email,jdbcType=VARCHAR},
+      </if>
+      <if test="record.gradeId != null">
+        t_classmates.grade_id = #{record.gradeId,jdbcType=INTEGER},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update t_classmates
+    set t_classmates.id = #{record.id,jdbcType=INTEGER},
+    t_classmates.name = #{record.name,jdbcType=VARCHAR},
+    t_classmates.gender = #{record.gender,jdbcType=CHAR},
+    t_classmates.email = #{record.email,jdbcType=VARCHAR},
+    t_classmates.grade_id = #{record.gradeId,jdbcType=INTEGER}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.alice.bean.Classmates">
+    update t_classmates
+    <set>
+      <if test="name != null">
+        t_classmates.name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="gender != null">
+        t_classmates.gender = #{gender,jdbcType=CHAR},
+      </if>
+      <if test="email != null">
+        t_classmates.email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="gradeId != null">
+        t_classmates.grade_id = #{gradeId,jdbcType=INTEGER},
+      </if>
+    </set>
+    where t_classmates.id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.alice.bean.Classmates">
+    update t_classmates
+    set name = #{name,jdbcType=VARCHAR},
+      gender = #{gender,jdbcType=CHAR},
+      email = #{email,jdbcType=VARCHAR},
+      grade_id = #{gradeId,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

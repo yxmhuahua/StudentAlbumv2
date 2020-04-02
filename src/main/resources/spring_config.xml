@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!--引入外部配置文件-->
+    <context:property-placeholder location="classpath:dbconfig.properties"></context:property-placeholder>
+    <!--==================配置核心业务相关的配置:数据源、事务控制==========================-->
+    <bean id="pooledDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="jdbcUrl" value="${jdbc.jdbcUrl}"></property>
+        <property name="driverClass" value="${jdbc.driverClass}"></property>
+        <property name="user" value="${jdbc.user}"></property>
+        <property name="password" value="${jdbc.password}"></property>
+    </bean>
+
+
+    <!--Spring扫描逻辑组件-->
+    <context:component-scan base-package="com.alice">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!--======================配置和mybatis的整合=========================-->
+
+    <!-- 在 MyBatis 中，使用 SqlSessionFactoryBuilder创建SqlSessionFactory ，进而来创建 SqlSession。
+    一旦获得一个 session 之后,你可以使用它来执行映射语句,提交或回滚连接,最后,当不再需要它的时候, 你可以关闭 session。
+     Mybatis社区自己开发了一个Mybatis-spring用来满足Mybatis用户整合Spring的需求。
+     使用 MyBatis-Spring 之后, 会使用SqlSessionFactoryBean来代替SqlSessionFactoryBuilder创建SqlSessionFactory，
+     然后可以使用两种方式使用sqlSession。
+     1.SqlSessionTemplate：
+    Mybatis-Spring提供了一种直接使用SqlSession的方式（一个实现了SqlSession接口的SqlSessionTemplate实现类）
+    它是线程安全的，可以被多个Dao同时使用；
+    它跟Spring的事务进行了关联，确保当前被使用的SqlSession是一个已经和Spring的事务进行绑定了的，而且它还可以自己管理Session的提交和关闭。
+    2.SqlSessionDaoSupport：SqlSessionDaoSupport 是一个抽象的支持类, 用来为你提供 SqlSession。
+    调用 getSqlSession()方法你会得到一个SqlSessionTemplate,之后可以用于执行 SQL 方法。
+    SqlSessionDaoSupport 需要一个 sqlSessionFactory 或sqlSessionTemplate 属性来设置 。
+    这 些要被 被 明 确地 设 置 或 者由 Spring 来 自 动 装 配 。
+    如 果 两 者 都 被 设 置 了 , 那 么 SqlSessionFactory 是被忽略的。（也可以使用下面的MapperScannerConfigurer来自动装配）-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="configLocation" value="classpath:mybatis_config.xml"></property>
+        <property name="dataSource" ref="pooledDataSource"></property>
+        <property name="mapperLocations"  value="classpath:mapper/*.xml"></property>
+
+    </bean>
+    <!--配置扫描器，将mybatis接口的实现加入到ioc容器中, 将会查找类路径下的映射器并自动将它们创建成 MapperFactoryBean。
+    MapperFactoryBean创建的代理类实现了 UserMapper 接口,并且注入到应用程序中。 因为代理创建在运行时环境中(Runtime) ,
+    那么指定的映射器必须是一个接口,而 不是一个具体的实现类。
+    basePackage 属性是为映射器接口文件设置基本的包路径。
+    你可以使用分号或逗号 作为分隔符设置多于一个的包路径。每个映射器将会在指定的包路径中递归地被搜索到。-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--扫描所有dao接口的实现，加入到ioc容器中-->
+        <property name="basePackage" value="com.alice.dao"></property>
+    </bean>
+
+    <!-- 配置一个可以执行批量操作的sqlsession -->
+    <bean id="sqlsession" class="org.mybatis.spring.SqlSessionTemplate" >
+        <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"></constructor-arg>
+        <constructor-arg name="executorType" value="BATCH"></constructor-arg>
+    </bean>
+    <!-- 前面的配置就是为了语句sqlsession.getMapper(ClassmatesMapper.class)的正常使用-->
+
+
+    <!--=================事务控制的配置=============================-->
+    <!--spring中基于xml的声明式事务控制配置步骤
+    1.配置事务管理器
+    2.配置事务通知
+        需要导入事务的约束,tx名称空间和约束，同时也需要aop
+        使用tx:advice标签配置事务通知
+              属性： id:事务的唯一标志
+                    transaction-manager:给事务通知提供事务管理器引用
+     3.配置aop中的通用切入点表达式
+     4.建立事务通知和切入点表达式的对应关系
+     5.配置事务的属性
+          是在tx:advice标签内部
+   -->
+    <bean id="TransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!--控制数据源的开启连接关闭-->
+        <property name="dataSource" ref="pooledDataSource"></property>
+    </bean>
+
+
+    <!--开启基于注解的事务，使用基于xml配置的事务（必要常用的都是使用配置式）通过 <tx:advice/> 标签来指定不同的事务性设置-->
+    <aop:config>
+        <!--切入点表达式 Pointcut 是指那些方法需要被执行"AOP",是由"Pointcut Expression"来描述的.配置的是事务切入点，下面表达式是service包（以及service的子包下）的所有方法(参数任意多)-->
+        <aop:pointcut id="txPoint" expression="execution(* com.alice.service..*(..))"/>
+        <!--配置事务增强-->
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPoint"/>
+    </aop:config>
+
+    <!--配置事务增强,事务如何切入,只是规定了一个advice不够，还需要指定一个aop:pointcut去引用他-->
+    <!--此处transaction-manager的值需要和事务管理器名称一致,代表使用这个事务管理器控制事务，细节在下面配置-->
+
+    <!--配置事务的属性
+ isolation：用于指定事务的隔离级别，默认DEFAULT,表示使用数据库的默认隔离级别
+ propagation：用于指定事务的传播行为，默认值REQUIRED,表示一定会有事务，增删改的选择，查询方法也可选择SUPPORTS
+ read-only：用于指定事务只读，只有查询方法才能设置为true,默认值为false,表示读写
+ timeout：用于指定事务的超时时间，默认值-1，永不超时，如果指定了数值，以秒为单位
+  no-rollback-for：用于指定一个异常，当产生该异常时，事务不回滚，产生其他异常时，事务回滚，没有默认值，表示任何异常都回滚
+  rollback-for：用于指定一个异常，当产生该异常时，事务回滚，产生其他异常时，事务不回滚，没有默认值，表示任何异常都回滚
+  -->
+
+    <tx:advice id="txAdvice" transaction-manager="TransactionManager">
+        <tx:attributes>
+            <!-- *的含义：切入点切入的所有方法都是事务方法-->
+            <tx:method name="*"/>
+            <!-- get*的含义：切入点的以get开头的所有方法都是事务方法-->
+            <tx:method name="get*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+    <!-- Spring配置文件的核心点：数据源、与mybatis的整合，事务控制-->
+
+
+
+
+
+
+</beans>
