@@ -34,7 +34,27 @@ public class ClassmatesService {
         ClassmatesExample.Criteria criteria=classmatesExample.createCriteria();
         criteria.andNameEqualTo(classmate_Name);
         long count=classmatesMapper.countByExample(classmatesExample);//查到的记录数
-         return count==0;
+        return count==0;
 
     }
+    //信息更新
+    public void updateClassmate(Classmates classmates)
+    {
+        classmatesMapper.updateByPrimaryKeySelective(classmates);
+    }
+
+    public  void delectClassmate(Integer id)
+    {
+        classmatesMapper.deleteByPrimaryKey(id);
+
+    }
+    public void delectBath(List<Integer> ids)
+    {
+        ClassmatesExample classmatesExample = new ClassmatesExample();
+        ClassmatesExample.Criteria criteria = classmatesExample.createCriteria();
+        criteria.andIdIn(ids);
+        classmatesMapper.deleteByExample(classmatesExample);
+
+    }
+
 }

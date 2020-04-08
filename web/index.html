@@ -20,8 +20,64 @@
 </head>
 <body>
 
-
-
+<!-- Modal -->
+<div class="modal fade" id="classmateUpdateModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">员工修改</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" id="classmate_info_form">
+                    <div class="form-group">
+                        <label for="updateName" class="col-sm-2 control-label">姓名</label>
+                        <div class="col-sm-10">
+                            <!--&lt;!&ndash;name属性是指封装到对应实体类的那个变量，名字要对应&ndash;&gt;
+                            <input type="text" class="form-control" name="name" id="updateName" placeholder="姓名">
+                            <span id="helpBlock2" class="help-block">  </span>-->
+                            <p class="formm-control-static" id="static_update_name"></p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label  class="col-sm-2 control-label">性别</label>
+                        <div class="col-sm-10">
+                            <label class="radio-inline">
+                                <!--name属性是指封装到对应实体类的那个变量，名字要对应-->
+                                <input type="radio" name="gender" id="gender_update1" value="M" checked="checked"> 男
+                            </label>
+                            <label class="radio-inline">
+                                <!--name属性是指封装到对应实体类的那个变量，名字要对应-->
+                                <input type="radio" name="gender" id="gender_update2" value="S"> 女
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateEmail" class="col-sm-2 control-label">邮箱</label>
+                        <div class="col-sm-10">
+                            <!--name属性是指封装到对应实体类的那个变量，名字要对应-->
+                            <input type="email" class="form-control"name="email" id="updateEmail" placeholder="邮箱">
+                            <span id="helpBlock3" class="help-block"> </span>
+                        </div>
+                    </div>
+                    <div class="form-group" >
+                        <label for="updateEmail" class="col-sm-2 control-label">年级</label>
+                        <div class="col-sm-4">
+                            <!--name属性是指封装到对应实体类的那个变量，名字要对应-->
+                            <select class="form-control" name="gradeId" id="select_grade_list">
+                                <!--                                <option>高中</option>-->
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="classmats_info_update">更新</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 
@@ -34,8 +90,6 @@
                 <h4 class="modal-title" id="myModalLabel">员工添加</h4>
             </div>
             <div class="modal-body">
-
-
                 <form class="form-horizontal" id="classmate_info_form">
                     <div class="form-group">
                         <label for="inputName" class="col-sm-2 control-label">姓名</label>
@@ -68,26 +122,17 @@
                         </div>
                     </div>
 
-
                     <div class="form-group" >
                         <label for="inputEmail" class="col-sm-2 control-label">年级</label>
                         <div class="col-sm-4">
                             <!--name属性是指封装到对应实体类的那个变量，名字要对应-->
                             <select class="form-control" name="gradeId" id="select_grade_list">
                                 <!--                                <option>高中</option>-->
-
-
-                            </select>
+                           </select>
                         </div>
                     </div>
 
-
-
-
                 </form>
-
-
-
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
@@ -113,7 +158,7 @@
     <div class="row">
         <div class="col-md-4 col-md-offset-12">
             <button class="btn btn-primary" id="classmate_add_model_btn">新增信息</button>
-            <button class="btn btn-danger">删除信息</button>
+            <button class="btn btn-danger" id="class_dele_infos">删除信息</button>
         </div>
     </div>
     <!--显示表格数据-->
@@ -123,6 +168,9 @@
             <table class="table table-hover" id="classmatesTable">
                 <thead>
                 <tr>
+                    <th>
+                        <input type="checkbox" id="check_all">
+                    </th>
                     <!--<th>ID</th>-->
                     <th>ID</th>
                     <th>姓名</th>
@@ -149,12 +197,12 @@
         </div>
         <!--分页条信息 -->
         <div class="col-md-6" id="page_nav">
-
-
         </div>
     </div>
 </div>
 <script type="text/javascript">
+
+    var totalrecord,currentpage;
     //1.页面加载完成后，直接发送ajax请求到json数据
     //查询分页对应内容的方法
     $(function ()//代表一个jquery对象表示启动后的自动切入点，和windows.onload作业相同
@@ -197,20 +245,25 @@
         var classmates=result.extend.PageInfo.list;
         $.each(classmates,function (index,item) {
             //alert(item.name);
+            var checkBoxs=$("<td><input type='checkbox' class='check_item'/></td>")
             var classematesId=$("<td></td>").append(item.id);
             var classematesName=$("<td></td>").append(item.name);
             var gender=item.gender=='M'?"男":"女";
             var classematesGender=$("<td></td>").append(gender);
             var classematesEmail=$("<td></td>").append(item.email);
             var classematesGradename=$("<td></td>").append(item.grade.gradeName);
-            //两个操作按钮的添加
-            var butttonDelect=$("<button></button>").addClass("btn btn-info btn-sm")
-                .append($("<span></span>").addClass("glyphicon glyphicon-pencil")).append("编辑");
-            var buttonEdit=$("<button></button>").addClass("btn btn-warning btn-sm")
-                .append($("<span></span>").addClass("glyphicon glyphicon-trash")).append("删除");
+            //两个操作按钮的添加,需要给按钮添加自定义属性指明id值
+            var buttonEdit=$("<button></button>").addClass("btn btn-warning btn-sm update_btn")
+                .append($("<span></span>").addClass("glyphicon glyphicon-trash")).append("编辑");
+            var butttonDelect=$("<button></button>").addClass("btn btn-info btn-sm delect_btn")
+                .append($("<span></span>").addClass("glyphicon glyphicon-pencil")).append("删除");
+
+            butttonDelect.attr("dele_id",item.id);
+            buttonEdit.attr("edit_id",item.id);
             var operateButtton=$("<td></td>").append(buttonEdit).append(" ").append(butttonDelect);
             //append方法执行结果还是返回原来的元素
             $("<tr></tr>")
+                .append(checkBoxs)
                 .append(classematesId)
                 .append(classematesName)
                 .append(classematesGender)
@@ -232,7 +285,8 @@
         $("#page_info").empty();
         $("#page_info")
             .append("当前"+result.extend.PageInfo.pageNum +"页,总"+result.extend.PageInfo.pages+"页,总"+result.extend.PageInfo.total+"条记录");
-
+        totalrecord=result.extend.PageInfo.total;
+        currentpage =  result.extend.PageInfo.pageNum;
     }
     //解析分页条
     function build_page_nav(result)
@@ -311,6 +365,7 @@
         ele.find("*").removeClass("has-success has-error ajax_st");
         //清空提示信息
         ele.find(".help-block").text("");
+        $("#select_grade_list").empty();
 
 
     }
@@ -320,13 +375,14 @@
         //弹框之前应该先发送ajax请求得到在数据库中的年级信息并显示在下拉列表
         //表单的重置
         reset_form($("#classmateAddModal form"));
-        getGradeInfo();
+        getGradeInfo($("#classmateAddModal select"));
         //弹出模态框
         $("#classmateAddModal").modal({backdrop:"static"});
     });
 
     //发送ajax请求得到在数据库中的年级信息并显示在下拉列表
-    function getGradeInfo() {
+    function getGradeInfo(ele) {
+
         $.ajax(
             {
                 url:  "/StudentAlbum/getGrade",
@@ -336,7 +392,7 @@
                     $.each(result.extend.gradeInfo,function () {
                         var optionEle=$("<option></option>")
                             .append(this.gradeName).attr("value",this.gradeId);
-                        optionEle.appendTo("#select_grade_list");
+                        optionEle.appendTo(ele);
                     });
 
 
@@ -379,41 +435,67 @@
     //1.模态框信息提交到服务器保存
     //2.发送ajax请求
     $("#classmats_info_save").click(function () {
-        //alert(decodeURIComponent($("#classmate_info_form").serialize(),true)) ;
+            //alert(decodeURIComponent($("#classmate_info_form").serialize(),true)) ;
             //show_validate_msg("#inputName","error","该姓名存在于同学录中，可能已经存储过");
 
-            vali_add_form_info();
-        //提交之前先对信息进行校验
-        if(!vali_add_form_info()){
-            return false;//注意此处想要返回false使得跳出函数需要在最外层function内部！！
+            /*    vali_add_form_info();
+            //提交之前先对信息进行校验
+            if(!vali_add_form_info()){
+                return false;//注意此处想要返回false使得跳出函数需要在最外层function内部！！
+            }*/
+            //保存之前在判断一下用户名重复性的校验有没有通过
+            // 在给员工姓名框绑定change事件的时候添加一个属性
+            //  if($(this).attr("ajax_st")=="error")
+            //  {
+            //      show_validate_msg("#inputName","error","该姓名存在于同学录中，可能已经存储过");
+            //      return  false;
+            //  }
+
+            $.ajax({
+                //在ajax里直接写return false，是无效的。
+                // 因为它返回的是ajax中的success方法
+                url:"/StudentAlbum/classmateInfo",
+                type:"POST",
+                //  async: false,//一定要是同步请求，否则会跳转；（ajax默认是异步的）
+                data:decodeURIComponent($("#classmate_info_form").serialize(),true),//serialize()序列表表格内容为字符串，用于 Ajax 请求。
+                //data:$("#classmate_info_form").serialize(),
+                success:function (result) {
+                    // 判断JSR303后端校验返回结果
+                    if (result.code == 100){
+                        //  alert(result.msg)
+                        $("#classmateAddModal").modal('hide');
+                        to_page(totalrecord);
+                    }else{
+                        //显示失败信息
+                        //console.log(result);
+                        if (undefined != result.extend.JSRerrorFields.email)
+                        {
+                            // alert (result.extend.JSRerrorFields.email);
+                            show_validate_msg("#inputEmail","error",result.extend.JSRerrorFields.email)
+
+                        }
+                        if (undefined != result.extend.JSRerrorFields.name)
+                        {
+                            //alert (result.extend.JSRerrorFields.name);
+                            show_validate_msg("#inputName","error",result.extend.JSRerrorFields.name);
+
+                        }
+                        //alert(result.extend.JSRerrorFields.email);
+
+                    }
+
+
+
+
+
+                }
+
+            })
+
+
+
+
         }
-        //保存之前在判断一下用户名重复性的校验有没有通过
-       // 在给员工姓名框绑定change事件的时候添加一个属性
-       //  if($(this).attr("ajax_st")=="error")
-       //  {
-       //      show_validate_msg("#inputName","error","该姓名存在于同学录中，可能已经存储过");
-       //      return  false;
-       //  }
-
-        $.ajax({
-            //在ajax里直接写return false，是无效的。
-            // 因为它返回的是ajax中的success方法
-            url:"/StudentAlbum/classmateInfo",
-            type:"POST",
-            async: false,//一定要是同步请求，否则会跳转；（ajax默认是异步的）
-            data:decodeURIComponent($("#classmate_info_form").serialize(),true),//serialize()序列表表格内容为字符串，用于 Ajax 请求。
-            //data:$("#classmate_info_form").serialize(),
-            success:function (result) {
-              //  alert(result.msg)
-                $("#classmateAddModal").modal('hide');
-            }
-
-        })
-
-
-
-
-    }
     );
 
 
@@ -492,6 +574,189 @@
 
 
 
+    //已有用户信息编辑功能
+    $(document).on("click",".update_btn",function () {
+        //click绑定失败，因为数据是ajax拿到的，
+        // 我们是按钮创建之前绑定的，所以绑定失败,新版本jquery删除了。
+        // 用on替换，可以为后创建的绑定事件
+//alert("update")
+        /*  0.查出员工信息
+          1.查出部门信息*/
+        $("#classmateUpdateModal select").empty();
+        getGradeInfo($("#classmateUpdateModal select"));
+        find_classmate_info($(this).attr("edit_id"));
+        //弹出模态框,把员工id传给模态框更新按钮
+        $("#classmats_info_update").attr("update_id",$(this).attr("edit_id"))
+        $("#classmateUpdateModal").modal({backdrop: "static"});
+
+
+
+
+
+
+
+    });
+
+    $(document).on("click",".delect_btn",function () {
+        /*        click绑定失败，因为数据是ajax拿到的，
+                我们是按钮创建之前绑定的，所以绑定失败,新版本jquery删除了。
+                用on替换，可以为后创建的绑定事件
+                1.弹出提示是否确认删除
+
+                */
+        // alert("delect")
+        var classmaName=$(this).parents("tr").find("td:eq(2)").text();
+        /* alert("是否确认删除" +);
+           confirm() 方法用于显示一个带有指定消息和 OK 及取消按钮的对话框。*/
+        if (confirm("确认删除["+classmaName+"]吗？"))
+        {
+            var classID=$(this).attr("dele_id");
+           // classID=String(classID);
+            $.ajax(
+                {
+                    url:"/StudentAlbum/Classmate/"+classID,
+                    type:"DELETE",
+                    success:function (result) {
+                        alert(result.msg);
+                        to_page(currentpage);
+                    }
+
+                }
+            );
+
+        }
+    });
+
+        function find_classmate_info(id) {
+
+            $.ajax({
+                url:"/StudentAlbum/Classmate/"+id,
+                type:"GET",
+                success:function (result) {
+                    console.log(result);
+                    var classmateData=result.extend.classmate;
+                    $("#static_update_name").text(classmateData.name);
+                    $("#updateEmail").val(classmateData.email);
+                    $("#classmateUpdateModal input[name=gender]").val([classmateData.gender]);
+                    $("#classmateUpdateModal select").val([classmateData.gradeId]);
+
+                }
+
+
+
+
+            });
+
+        }
+
+        $("#classmats_info_update").click(function () {
+          //验证邮箱
+                var email_info=$("#updateEmail").val();
+                var reg_email=/^([a-z0-9_\-]+)@([\da-z.-]+)\.([a-z.]{2,6})$/;
+                if(!reg_email.test(email_info))
+                {
+                    // alert(email_info);
+                    // alert(reg_email.test(email_info));
+                    show_validate_msg("#updateEmail","error","邮箱格式错误，请检查后输入！");
+                    return false;
+                }
+                else {
+                    /*                alert(email_info);
+                                    alert(reg_email.test(email_info));*/
+                    show_validate_msg("#updateEmail","success","");
+                    //return true;
+                }
+                //发送ajax请求保存更新后的同学信息
+                $.ajax(
+                    {
+                        url:"/StudentAlbum/Classmate/"+$(this).attr("update_id"),
+                        type:"PUT",
+                        /*     此时有可能除了路径带的其余都是null，也就是请求体中有数据，但是对象封装不上，
+
+                             原因是tomcat原理是将请求体中数据封装一个map，request。getParamter("name")就会从这个map中取值
+                             springMVC封装POJO对象的时候：会把POJO每个属性的值，request.getParamter（"name"）;*/
+                        /*    当是post的时候data需要加&method="PUT"进进入了配置的转化过滤器
+                            此时路径中的id必须和实体类属性一致才能传给函数进行查询，
+                            修改@Restmapping里面的value属性的{}里面的变量名否则是null*/
+                        data:$("#classmateUpdateModal form").serialize(),
+                        success:function (result) {
+                            // alert(result.msg);
+                            $("#classmateUpdateModal").modal('hide');
+                            //再次发送ajax请求刷新信息数据
+                            to_page(currentpage);
+
+                        }
+                    }
+                );
+            }
+
+        )
+
+
+
+        //全选/全不选功能
+        $("#check_all").click(function () {
+            //attr获取checked属性一直是undefined；因为dom原生属性推荐prop获取，attr用来自定义属性中
+            //alert($(this).prop("checked"))
+            //让所有的选择框和全选框状态一致
+            $(".check_item").prop("checked",$(this).prop("checked"));
+            //check_item绑定事件 on 因为后创建，保证check_item全选的时候，全选按钮也选中
+
+
+
+
+
+
+
+        });
+
+
+        $(document).on("click",".check_item",function () {
+            //判断是否全选择/全不选
+            //  alert($(".check_item:checked").length);
+            var flag_check = $(".check_item:checked").length == $(".check_item").length;
+            /*if($(".check_item:checked").length == $(".check_item").length){
+                $("#check_all").prop("checked",flag_check);
+            }
+            if($(".check_item:checked").length < $(".check_item").length){
+                $("#check_all").prop("checked",false);
+            }
+    */
+            /* if($(".check_item:checked").length == $(".check_item").length){*/
+            $("#check_all").prop("checked",flag_check);
+            /*}*/
+
+        });
+
+
+        $("#class_dele_infos").click(function () {
+            var class_name_checked="" ;
+            var class_id_checked="";
+            $.each($(".check_item:checked"),function () {
+                //回调函数
+
+                class_name_checked+=$(this).parents("tr").find("td:eq(2)").text()+",";
+                //alert(class_name_checked);
+                class_id_checked+=$(this).parents("tr").find("td:eq(1)").text()+"-";
+
+            });
+            //alert();
+            //去除多余的逗号，和-
+            class_id_checked=class_id_checked.substring(0,class_id_checked.length-1);
+            class_name_checked=class_name_checked.substring(0,class_name_checked.length-1);
+            if (confirm("确认删除【"+class_name_checked+"】吗？")){
+
+                $.ajax({
+                    url:"/StudentAlbum/Classmate/"+class_id_checked,
+                    type:"DELETE",
+                    success:function (result) {
+                        alert(result.msg);
+                    }
+
+                });
+            }
+
+        });
 
 
 </script>

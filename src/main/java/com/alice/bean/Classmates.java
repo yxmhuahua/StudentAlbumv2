@@ -1,12 +1,21 @@
 package com.alice.bean;
 
+import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.NotEmpty;
+
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
 public class Classmates {
     public Integer id;
-
+    //利用springmvc对重要数据进行JSR303后端校验
+    @Pattern(regexp = "(^[a-zA-Z0-9_-]{6,16}$)|(^[\u2E80-\u9FFF]{2,5})",message = "姓名格式有误，必须是2-5位中文名或者6-16位英文名！")//自定义校验规则
     public String name;
-
+    @NotEmpty(message="性别为必选项！")
     public String gender;
 
+    @Email(message = "邮箱格式不正确")
     public  String email;
 
     public  Integer gradeId;
